@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArcGIS Login Page</title>
+  <script src="https://js.arcgis.com/3.45/"></script>
+</head>
+<body>
+  <h2>Welcome! Please log in to access the map.</h2>
+  <button id="loginBtn">Login</button>
+
+  <script>
+    require(["esri/IdentityManager", "esri/arcgis/OAuthInfo"], function(esriId, OAuthInfo) {
+      const info = new OAuthInfo({
+        appId: "kJb5xoxjKAHsY2ag",
+        popup: false,
+        flowType: "auto",
+        redirectUri: "https://YOUR_GITHUB_USERNAME.github.io/arcgis_github_oauth/login-complete.html"
+      });
+
+      esriId.registerOAuthInfos([info]);
+
+      document.getElementById("loginBtn").addEventListener("click", function () {
+        esriId.getCredential("https://www.arcgis.com/sharing");
+      });
+    });
+  </script>
+</body>
+</html>
