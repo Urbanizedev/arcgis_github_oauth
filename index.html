@@ -2,28 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArcGIS OAuth Map Viewer</title>
+  <title>ArcGIS WebMap Selector</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
   <script src="https://js.arcgis.com/4.29/"></script>
   <style>
-    html, body, #viewDiv {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      width: 100%;
       font-family: sans-serif;
     }
-    .esri-widget {
+    #viewDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+    }
+    #toolbar {
+      background: #f4f4f4;
+      padding: 0.5rem 1rem;
+    }
+    select {
       font-size: 1rem;
+      padding: 0.4rem;
+      width: 250px;
     }
   </style>
 </head>
 <body>
+
+  <div id="toolbar">
+    <label for="webmapSelect"><strong>Select Your WebMap:</strong></label>
+    <select id="webmapSelect">
+      <option>Loading...</option>
+    </select>
+  </div>
+
   <div id="viewDiv"></div>
 
   <script>
-    const clientId = "kJb5xoqjKAHsY2ag"; // Replace with your ArcGIS App Client ID
+    const clientId = "kJb5xoqjKAHsY2ag";
     const redirectUri = window.location.origin + window.location.pathname;
 
     function handleAuth() {
@@ -40,7 +57,6 @@
       const savedToken = localStorage.getItem("arcgis_token");
       if (savedToken) return savedToken;
 
-      // Redirect to ArcGIS OAuth2
       const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
       authUrl.searchParams.set("client_id", clientId);
       authUrl.searchParams.set("response_type", "token");
@@ -63,9 +79,11 @@
       "esri/widgets/BasemapToggle",
       "esri/widgets/Fullscreen",
       "esri/widgets/Expand"
-    ], function(WebMap, MapView, esriConfig, LayerList, Legend, Bookmarks, Search, BasemapToggle, Fullscreen, Expand) {
-
-      // Inject token for all requests
+    ], function (
+      WebMap, MapView, esriConfig,
+      LayerList, Legend, Bookmarks,
+      Search, BasemapToggle, Fullscreen, Expand
+    ) {
       esriConfig.request.interceptors.push({
         before: (params) => {
           params.requestOptions.query = {
@@ -75,43 +93,90 @@
         }
       });
 
-      const webmap = new WebMap({
-        portalItem: { id: "kJb5xoqjKAHsY2ag" }
-      });
+      const viewDiv = document.getElementById("viewDiv");
+      const select = document.getElementById("webmapSelect");
+      let view;
 
-      const view = new MapView({
-        container: "viewDiv",
-        map: webmap
-      });
+      // Fetch user's WebMaps
+      async function fetchUserWebmaps() {
+        const userRes = await fetch(`https://www.arcgis.com/sharing/rest/community/self?f=json&token=${accessToken}`);
+        const user = await userRes.json();
 
-      view.when(() => {
-        // 📌 LayerList
-        const layerList = new LayerList({ view });
-        view.ui.add(new Expand({ view, content: layerList }), "top-right");
+        const contentRes = await fetch(`https://www.arcgis.com/sharing/rest/content/users/${user.username}?f=json&token=${accessToken}`);
+        const content = await contentRes.json();
+        const webmaps = content.items.filter(item => item.type === "Web Map");
 
-        // 📌 Legend
-        const legend = new Legend({ view });
-        view.ui.add(new Expand({ view, content: legend }), "top-right");
+        select.innerHTML = "";
 
-        // 📌 Bookmarks
-        const bookmarks = new Bookmarks({ view, editingEnabled: false });
-        view.ui.add(new Expand({ view, content: bookmarks }), "top-right");
+        if (webmaps.length === 0) {
+          select.innerHTML = "<option>No WebMaps found</option>";
+          return;
+        }
 
-        // 📌 Search
+        for (const wm of webmaps) {
+          const option = document.createElement("option");
+          option.value = wm.id;
+          option.textContent = wm.title;
+          select.appendChild(option);
+        }
+
+        // Load first WebMap by default
+        loadWebMap(webmaps[0].id);
+      }
+
+      function loadWebMap(webmapId) {
+        const webmap = new WebMap({
+          portalItem: { id: webmapId }
+        });
+
+        if (!view) {
+          view = new MapView({
+            container: "viewDiv",
+            map: webmap
+          });
+
+          view.when(() => {
+            addWidgets(view);
+          });
+        } else {
+          view.map = webmap;
+        }
+      }
+
+      function addWidgets(view) {
+        // Search
         const search = new Search({ view });
         view.ui.add(search, "top-left");
 
-        // 📌 Basemap toggle
-        const toggle = new BasemapToggle({
+        // Layer List
+        const layerList = new LayerList({ view });
+        view.ui.add(new Expand({ view, content: layerList }), "top-right");
+
+        // Legend
+        const legend = new Legend({ view });
+        view.ui.add(new Expand({ view, content: legend }), "top-right");
+
+        // Bookmarks
+        const bookmarks = new Bookmarks({ view });
+        view.ui.add(new Expand({ view, content: bookmarks }), "top-right");
+
+        // Basemap Toggle
+        const basemapToggle = new BasemapToggle({
           view,
           nextBasemap: "satellite"
         });
-        view.ui.add(toggle, "bottom-right");
+        view.ui.add(basemapToggle, "bottom-right");
 
-        // 📌 Fullscreen
+        // Fullscreen
         const fullscreen = new Fullscreen({ view });
         view.ui.add(fullscreen, "bottom-right");
+      }
+
+      select.addEventListener("change", (e) => {
+        loadWebMap(e.target.value);
       });
+
+      fetchUserWebmaps();
     });
   </script>
 </body>
