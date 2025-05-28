@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login Complete</title>
+  <script src="https://js.arcgis.com/3.45/"></script>
+</head>
+<body>
+  <p>Logging in... please wait.</p>
+  <script>
+    require(["esri/IdentityManager"], function(esriId) {
+      if (esriId.credentials.length > 0) {
+        const user = esriId.credentials[0].userId;
+        window.location.href = "dashboard.html?user=" + encodeURIComponent(user);
+      } else {
+        alert("Login failed");
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
