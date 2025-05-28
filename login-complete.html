@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Login Complete</title>
+    <script src="https://js.arcgis.com/4.29/"></script>
+  </head>
+  <body>
+    <h2>Logging in...</h2>
+    <script>
+      require([
+        "esri/identity/IdentityManager"
+      ], function(esriId) {
+        esriId.checkSignInStatus("https://www.arcgis.com/sharing")
+          .then(function() {
+            window.location.href = "dashboard.html";
+          }).catch(function() {
+            document.body.innerHTML = "<h2>Login failed. Please try again.</h2>";
+          });
+      });
+    </script>
+  </body>
+</html>
