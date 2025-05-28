@@ -2,13 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArcGIS OAuth Map</title>
+  <title>ArcGIS OAuth Map + User Info</title>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
   <style>
-    html, body, #viewDiv {
-      padding: 0;
+    html, body {
       margin: 0;
+      padding: 0;
       height: 100%;
+    }
+    #info {
+      padding: 1rem;
+      background: #f4f4f4;
+      font-family: sans-serif;
+    }
+    #viewDiv {
+      height: calc(100% - 150px);
       width: 100%;
     }
   </style>
@@ -16,10 +24,16 @@
   <script src="https://js.arcgis.com/4.29/"></script>
 </head>
 <body>
+
+  <div id="info">
+    <h3>User Info</h3>
+    <div id="user-info">Loading...</div>
+  </div>
+
   <div id="viewDiv"></div>
 
   <script>
-    const clientId = "kJb5xoqjKAHsY2ag"; // ✅ your ArcGIS app client ID
+    const clientId = "kJb5xoqjKAHsY2ag";
     const redirectUri = window.location.origin + window.location.pathname;
 
     function handleAuth() {
@@ -29,32 +43,49 @@
 
       if (token) {
         localStorage.setItem("arcgis_token", token);
-        window.history.replaceState(null, "", window.location.pathname); // clean URL
+        window.history.replaceState(null, "", window.location.pathname);
         return token;
       }
 
       const savedToken = localStorage.getItem("arcgis_token");
       if (savedToken) return savedToken;
 
-      // Redirect to ArcGIS login
       const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
       authUrl.searchParams.set("client_id", clientId);
       authUrl.searchParams.set("response_type", "token");
       authUrl.searchParams.set("redirect_uri", redirectUri);
-      authUrl.searchParams.set("expiration", "20160"); // 14 days
+      authUrl.searchParams.set("expiration", "20160");
 
       window.location.href = authUrl.toString();
     }
 
     const accessToken = handleAuth();
 
+    // 🔹 Get user info from ArcGIS Online
+    async function fetchUserInfo(token) {
+      const res = await fetch(`https://www.arcgis.com/sharing/rest/community/self?f=json&token=${token}`);
+      const data = await res.json();
+      document.getElementById("user-info").innerHTML = `
+        <strong>Full Name:</strong> ${data.fullName || "N/A"}<br>
+        <strong>Username:</strong> ${data.username}<br>
+        <strong>Email:</strong> ${data.email || "N/A"}<br>
+        <strong>Role:</strong> ${data.role}<br>
+        <strong>Org ID:</strong> ${data.orgId}<br>
+        <strong>Groups:</strong> <ul>${
+          (data.groups || []).map(group => `<li>${group.title}</li>`).join('')
+        }</ul>
+      `;
+    }
+
+    fetchUserInfo(accessToken);
+
+    // 🔹 Load your secured WebMap
     require([
       "esri/Map",
       "esri/views/MapView",
       "esri/WebMap",
       "esri/config"
     ], (Map, MapView, WebMap, esriConfig) => {
-      // Attach token to every request
       esriConfig.request.interceptors.push({
         before: (params) => {
           params.requestOptions.query = {
@@ -66,7 +97,7 @@
 
       const webmap = new WebMap({
         portalItem: {
-          id: "kJb5xoqjKAHsY2ag" // ✅ your WebMap ID
+          id: "kJb5xoqjKAHsY2ag"
         }
       });
 
