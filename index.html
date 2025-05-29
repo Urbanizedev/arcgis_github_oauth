@@ -1,74 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArcGIS OAuth Map Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
-  <script src="https://js.arcgis.com/4.29/"></script>
-  <style>
-    html, body, #viewDiv { height: 100%; margin: 0; padding: 0; }
-    #loginBtn {
-      position: absolute; z-index: 99;
-      top: 10px; left: 10px;
-      background: #007ac2; color: white; border: none;
-      padding: 10px 20px; cursor: pointer;
-      font-size: 16px; border-radius: 4px;
-    }
-  </style>
+  <title>ArcGIS OAuth Redirect</title>
 </head>
 <body>
-  <button id="loginBtn">Login with ArcGIS</button>
-  <div id="viewDiv" style="display:none;"></div>
+<script>
+  const clientId = "kJb5xoqjKAHsY2ag"; // Replace with your client ID
+  const redirectUri = window.location.origin + window.location.pathname;
 
-  <script>
-    const clientId = "kJb5xoqjKAHsY2ag";
-    const redirectUri = "https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4";
+  // ✅ Destination URL – replace with your target web app
+  const baseDestinationUrl = "https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4";
 
+  function handleAuth() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
 
     if (token) {
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("viewDiv").style.display = "block";
-      loadMap(token);
+      localStorage.setItem("arcgis_token", token);
+      window.location.href = `${baseDestinationUrl}&token=${token}`;
+      return;
     }
 
-    document.getElementById("loginBtn").onclick = () => {
-      const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
-      authUrl.searchParams.set("client_id", clientId);
-      authUrl.searchParams.set("response_type", "token");
-      authUrl.searchParams.set("redirect_uri", redirectUri);
-      window.location.href = authUrl.toString();
-    };
-
-    function loadMap(token) {
-      require([
-        "esri/WebMap", "esri/views/MapView", "esri/config", "esri/widgets/LayerList"
-      ], (WebMap, MapView, esriConfig, LayerList) => {
-        esriConfig.request.interceptors.push({
-          before: (params) => {
-            params.requestOptions.query = {
-              ...params.requestOptions.query,
-              token: token
-            };
-          }
-        });
-
-        const webmap = new WebMap({
-          portalItem: { id: "kJb5xoqjKAHsY2ag" } // or dynamically select based on user
-        });
-
-        const view = new MapView({
-          container: "viewDiv",
-          map: webmap
-        });
-
-        const layerList = new LayerList({ view });
-        view.ui.add(layerList, "top-right");
-      });
+    const savedToken = localStorage.getItem("arcgis_token");
+    if (savedToken) {
+      window.location.href = `${baseDestinationUrl}&token=${savedToken}`;
+      return;
     }
-  </script>
+
+    const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
+    authUrl.searchParams.set("client_id", clientId);
+    authUrl.searchParams.set("response_type", "token");
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("expiration", "20160");
+
+    window.location.href = authUrl.toString();
+  }
+
+  handleAuth();
+</script>
 </body>
 </html>
+
