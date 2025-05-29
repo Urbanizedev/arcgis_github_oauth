@@ -2,39 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArcGIS OAuth Redirect</title>
+  <title>ArcGIS OAuth Selector</title>
 </head>
 <body>
-<script>
-  const clientId = "kJb5xoqjKAHsY2ag"; // Your App ID
-  const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/"; // MUST match registered URI
-  const baseDestinationUrl = "https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4";
+  <h2>Select a Client</h2>
+  <select id="clientSelector">
+    <option value="">-- Choose a client --</option>
+    <option value="Dealmap|kJb5xoqjKAHsY2ag|https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4">DealMap</option>
+    <option value="Georgia 2024|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=09dbef59d03c47a28337e56a3125052a">Georgia 2024</option>
+    <!-- Add more clients here -->
+  </select>
 
-  function handleAuth() {
+<script>
+  const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/"; // Must match what's in ArcGIS app settings
+
+  document.getElementById("clientSelector").addEventListener("change", function() {
+    const selection = this.value;
+
+    if (!selection) return;
+
+    const [label, clientId, baseDestinationUrl] = selection.split("|");
+
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
 
     if (token) {
-      // Redirect to the final destination with token
       window.location.href = `${baseDestinationUrl}&token=${token}`;
       return;
     }
 
-    // ✅ Force login — skip checking localStorage
+    // Force login
     const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("response_type", "token");
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("expiration", "20160");
 
-    // Redirect user to ArcGIS OAuth
     window.location.href = authUrl.toString();
-  }
-
-  handleAuth();
+  });
 </script>
 </body>
 </html>
-
-
