@@ -6,10 +6,8 @@
 </head>
 <body>
 <script>
-  const clientId = "kJb5xoqjKAHsY2ag"; // Replace with your client ID
-  const redirectUri = window.location.origin + window.location.pathname;
-
-  // ✅ Destination URL – replace with your target web app
+  const clientId = "kJb5xoqjKAHsY2ag"; // Your App ID
+  const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/"; // MUST match registered URI
   const baseDestinationUrl = "https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4";
 
   function handleAuth() {
@@ -18,23 +16,19 @@
     const token = params.get("access_token");
 
     if (token) {
-      localStorage.setItem("arcgis_token", token);
+      // Redirect to the final destination with token
       window.location.href = `${baseDestinationUrl}&token=${token}`;
       return;
     }
 
-    const savedToken = localStorage.getItem("arcgis_token");
-    if (savedToken) {
-      window.location.href = `${baseDestinationUrl}&token=${savedToken}`;
-      return;
-    }
-
+    // ✅ Force login — skip checking localStorage
     const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("response_type", "token");
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("expiration", "20160");
 
+    // Redirect user to ArcGIS OAuth
     window.location.href = authUrl.toString();
   }
 
@@ -42,4 +36,5 @@
 </script>
 </body>
 </html>
+
 
