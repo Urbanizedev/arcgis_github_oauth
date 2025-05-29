@@ -11,30 +11,23 @@
     <option value="Dealmap|kJb5xoqjKAHsY2ag|https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4">DealMap</option>
     <option value="Georgia 2024|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=09dbef59d03c47a28337e56a3125052a">Georgia 2024</option>
     <option value="South Carolina 2025|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=d67f996ede5744b388116b3bcf137fdf">2025 South Carolina LIHTC Map</option>
-     <option value="Virginia 2025|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=2f36456652274acab7f570f016913b6c">2024 Virginia LIHTC Map - Doran Co</option>
-    <!-- Add more clients here -->
+    <option value="Virginia 2025|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=2f36456652274acab7f570f016913b6c">2024 Virginia LIHTC Map - Doran Co</option>
   </select>
 
 <script>
-  const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/"; // Must match what's in ArcGIS app settings
+  const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/";
 
-  document.getElementById("clientSelector").addEventListener("change", function() {
-    const selection = this.value;
-
-    if (!selection) return;
-
-    const [label, clientId, baseDestinationUrl] = selection.split("|");
-
+  function handleAuthFlow(clientId, baseDestinationUrl) {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
 
     if (token) {
+      sessionStorage.removeItem("selectedClient"); // Clean up
       window.location.href = `${baseDestinationUrl}&token=${token}`;
       return;
     }
 
-    // Force login
     const authUrl = new URL("https://www.arcgis.com/sharing/rest/oauth2/authorize");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("response_type", "token");
@@ -42,6 +35,26 @@
     authUrl.searchParams.set("expiration", "20160");
 
     window.location.href = authUrl.toString();
+  }
+
+  const selector = document.getElementById("clientSelector");
+
+  selector.addEventListener("change", function () {
+    const selection = this.value;
+    if (!selection) return;
+
+    sessionStorage.setItem("selectedClient", selection); // Save selection
+
+    const [label, clientId, baseDestinationUrl] = selection.split("|");
+    handleAuthFlow(clientId, baseDestinationUrl);
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const stored = sessionStorage.getItem("selectedClient");
+    if (stored) {
+      const [label, clientId, baseDestinationUrl] = stored.split("|");
+      handleAuthFlow(clientId, baseDestinationUrl);
+    }
   });
 </script>
 </body>
