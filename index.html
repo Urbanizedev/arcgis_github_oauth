@@ -2,17 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArcGIS OAuth Selector</title>
+  <title>Urbanize Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('https://img1.wsimg.com/isteam/ip/ef91730d-47e1-4aa4-8c05-0a7049cd9d83/Urbanize%20Sustainable%20Logo%20(Presentatio-6af2a6c.png/:/rs=w:1600,h:768,cg:true,m/cr=w:1600,h:768');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 2rem;
+      border-radius: 12px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    select {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Select a Client</h2>
-  <select id="clientSelector">
-    <option value="">-- Choose a client --</option>
+
+  <a class="logo" href="https://urbanize.dev" target="_blank">
+    <img src="https://img1.wsimg.com/isteam/ip/ef91730d-47e1-4aa4-8c05-0a7049cd9d83/Urbanize%20Sustainable%20Logo%20(Presentatio-6af2a6c.png/:/rs=w:319,h:75,cg:true,m/cr=w:319,h:75/qt=q:95" alt="Urbanize Logo" width="160">
+  </a>
+
+  <div class="container">
+    <h1>Select a Map to Begin</h1>
+    <select id="clientSelector">
+ <option value="">-- Choose a client --</option>
     <option value="Dealmap|kJb5xoqjKAHsY2ag|https://urbanize.maps.arcgis.com/apps/webappviewer/index.html?id=f6354f9fc1024799bc92dde2a0f10ae4">DealMap</option>
     <option value="Georgia 2024|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=09dbef59d03c47a28337e56a3125052a">Georgia 2024</option>
     <option value="South Carolina 2025|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=d67f996ede5744b388116b3bcf137fdf">2025 South Carolina LIHTC Map</option>
     <option value="Virginia 2025|rfNcWeqHUfLt8kA9|https://urbtx.maps.arcgis.com/apps/webappviewer/index.html?id=2f36456652274acab7f570f016913b6c">2024 Virginia LIHTC Map - Doran Co</option>
   </select>
+    </select>
+  </div>
 
 <script>
   const redirectUri = "https://urbanizedev.github.io/arcgis_github_oauth/";
@@ -23,7 +71,7 @@
     const token = params.get("access_token");
 
     if (token) {
-      sessionStorage.removeItem("selectedClient"); // Clean up
+      sessionStorage.removeItem("selectedClient");
       window.location.href = `${baseDestinationUrl}&token=${token}`;
       return;
     }
@@ -43,8 +91,7 @@
     const selection = this.value;
     if (!selection) return;
 
-    sessionStorage.setItem("selectedClient", selection); // Save selection
-
+    sessionStorage.setItem("selectedClient", selection);
     const [label, clientId, baseDestinationUrl] = selection.split("|");
     handleAuthFlow(clientId, baseDestinationUrl);
   });
@@ -57,5 +104,6 @@
     }
   });
 </script>
+
 </body>
 </html>
